@@ -1,0 +1,48 @@
+name: nofap_tracker
+description: "اپلیکیشن ترک خودارضایی با سیستم رتبه‌بندی و تایمر"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # آیکون‌های iOS
+  cupertino_icons: ^1.0.8
+
+  # ذخیره اطلاعات کاربر
+  shared_preferences: ^2.2.2
+
+  # مدیریت استیت
+  provider: ^6.1.2
+
+  # اعلان‌های روزانه
+  flutter_local_notifications: ^18.0.1
+
+  # فونت‌های زیبا
+  google_fonts: ^6.1.0
+  fl_chart: 0.63.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Vazir
+      fonts:
+        - asset: assets/fonts/Vazir-Regular.ttf
+        - asset: assets/fonts/Vazir-Bold.ttf
+          weight: 700
