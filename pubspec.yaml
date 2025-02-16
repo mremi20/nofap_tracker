@@ -26,6 +26,7 @@ dependencies:
   # فونت‌های زیبا
   google_fonts: ^6.1.0
   fl_chart: 0.63.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

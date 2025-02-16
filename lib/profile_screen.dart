@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
-
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _ageController = TextEditingController();
-  String username = "";
-  String gender = "مرد";
-  int age = 0;
+  TextEditingController nameController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController bioController = TextEditingController();
+  String profileImagePath = "";
+  bool isDarkMode = false;
 
   @override
   void initState() {
@@ -21,115 +21,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  // 📌 خواندن اطلاعات از SharedPreferences
-  void _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+  // لود کردن اطلاعات ذخیره‌شده
+  Future<void> _loadUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      username = prefs.getString('username') ?? "";
-      age = prefs.getInt('age') ?? 0;
-      gender = prefs.getString('gender') ?? "مرد";
-      _nameController.text = username;
-      _ageController.text = age > 0 ? age.toString() : "";
+      nameController.text = prefs.getString('name') ?? "کاربر";
+      usernameController.text = prefs.getString('username') ?? "username";
+      bioController.text =
+          prefs.getString('bio') ?? "بیوگرافی خود را وارد کنید";
+      profileImagePath = prefs.getString('profileImage') ?? "";
+      isDarkMode = prefs.getBool('darkMode') ?? false;
     });
   }
 
-  // 📌 ذخیره اطلاعات کاربر
-  void _saveUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String newUsername = _nameController.text;
-    int newAge = int.tryParse(_ageController.text) ?? 0;
+  // ذخیره اطلاعات کاربر
+  Future<void> _saveUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('name', nameController.text);
+    prefs.setString('username', usernameController.text);
+    prefs.setString('bio', bioController.text);
+    prefs.setString('profileImage', profileImagePath);
+    prefs.setBool('darkMode', isDarkMode);
+  }
 
-    await prefs.setString('username', newUsername);
-    await prefs.setInt('age', newAge);
-    await prefs.setString('gender', gender);
+  // تغییر عکس پروفایل
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        profileImagePath = pickedFile.path;
+      });
+      _saveUserData();
+    }
+  }
 
+  // تغییر تم دارک و لایت
+  void _toggleDarkMode() async {
     setState(() {
-      username = newUsername;
-      age = newAge;
+      isDarkMode = !isDarkMode;
     });
-
-    // 📌 نمایش پیام ذخیره شدن اطلاعات
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("اطلاعات ذخیره شد ✅"),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    _saveUserData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("پنل کاربری")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "نام خود را وارد کنید:",
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "نام کاربری",
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "سن:",
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _ageController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "سن",
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "جنسیت:",
-              style: TextStyle(fontSize: 18),
-            ),
-            DropdownButton<String>(
-              value: gender,
-              items: ["مرد", "زن"].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  gender = newValue!;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveUserData,
-              child: const Text("ذخیره تغییرات"),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "نام شما: $username",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              "سن: ${age > 0 ? age : "نامشخص"}",
-              style: const TextStyle(fontSize: 18),
-            ),
-            Text(
-              "جنسیت: $gender",
-              style: const TextStyle(fontSize: 18),
-            ),
+    return MaterialApp(
+      theme: isDarkMode ? ThemeData.dark() : ThemeData.light(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text("پروفایل"),
+          actions: [
+            IconButton(
+              icon: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+              onPressed: _toggleDarkMode,
+            )
           ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: profileImagePath.isNotEmpty
+                      ? FileImage(File(profileImagePath))
+                      : null,
+                  child: profileImagePath.isEmpty
+                      ? Icon(Icons.person, size: 50, color: Colors.grey)
+                      : null,
+                ),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: "نام"),
+              ),
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(labelText: "نام کاربری"),
+              ),
+              TextField(
+                controller: bioController,
+                decoration: InputDecoration(labelText: "بیوگرافی"),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveUserData,
+                child: Text("ذخیره تغییرات"),
+              )
+            ],
+          ),
         ),
       ),
     );
